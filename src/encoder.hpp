@@ -60,6 +60,13 @@ private:
 	uint32_t height_ = 0;
 	uint64_t submitted_ = 0;
 
+	// The pool's job queue length. submit() keeps at most this many frames in flight.
+	uint32_t queue_depth_ = 0;
+
+	// Takes one finished sample out of the pool, hands it to `on_sample` and frees its input
+	// buffer. False when no sample came back.
+	bool take(bool block, const OnSample &on_sample);
+
 	// Keyed by the frame number handed to CFHD_EncodeAsyncSample. std::map rather than a
 	// vector because the pool returns numbers, not positions, and an erase must not move the
 	// buffers the pool is still holding pointers into.

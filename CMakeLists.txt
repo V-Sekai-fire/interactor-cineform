@@ -160,5 +160,27 @@ if(CINEFORM_PROOF)
   target_link_libraries(cineform-proof-wire PRIVATE weft::harness)
   add_test(NAME wire_agreement COMMAND cineform-proof-wire)
 
+  # The full-queue gate, and its planted twin: the same proof built with the cap compiled
+  # out of Encoder::submit. The twin must hang, so its test passes only when the proof fails.
+  foreach(variant queue queue-plant)
+    add_executable(cineform-proof-${variant} proof/encoder_queue.cpp src/encoder.cpp)
+    target_include_directories(cineform-proof-${variant} PRIVATE
+      "${CMAKE_SOURCE_DIR}/src"
+      "${CINEFORM_DIR}/Codec"
+      "${CINEFORM_DIR}/Common"
+      "${CINEFORM_DIR}/EncoderSDK")
+    target_link_libraries(cineform-proof-${variant} PRIVATE CFHDCodecStatic Threads::Threads)
+    if(UNIX AND NOT APPLE)
+      target_link_libraries(cineform-proof-${variant} PRIVATE ${UUID_LIBRARY})
+    endif()
+    if(NOT MSVC AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64")
+      target_compile_options(cineform-proof-${variant} PRIVATE -mssse3)
+    endif()
+  endforeach()
+  target_compile_definitions(cineform-proof-queue-plant PRIVATE CINEFORM_PLANT_NO_CAP)
+  add_test(NAME encoder_queue COMMAND cineform-proof-queue)
+  add_test(NAME encoder_queue_plant COMMAND cineform-proof-queue-plant)
+  set_tests_properties(encoder_queue_plant PROPERTIES WILL_FAIL TRUE)
+
 endif()
 

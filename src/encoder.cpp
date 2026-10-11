@@ -81,6 +81,7 @@ bool Encoder::start(uint32_t width, uint32_t height, uint32_t quality, uint32_t 
 
 	width_ = width;
 	height_ = height;
+	queue_depth_ = uint32_t(queue_depth);
 	submitted_ = 0;
 	return true;
 }
@@ -93,6 +94,19 @@ bool Encoder::submit(const uint8_t *rgba, const OnSample &on_sample, std::string
 
 	const uint32_t pitch = width_ * 4u;
 	const uint32_t number = uint32_t(submitted_);
+
+	// A full queue frees a slot only when this thread takes a sample out, so submitting into
+	// one waits forever. Take finished samples until there is room. CINEFORM_PLANT_NO_CAP
+	// removes this for proof/encoder_queue.cpp's negative control, which must then hang.
+#ifndef CINEFORM_PLANT_NO_CAP
+	while (inflight_.size() >= queue_depth_) {
+		if (!take(true, on_sample)) {
+			*error = "CFHD_WaitForSample returned no sample with the queue full at frame " +
+					std::to_string(number);
+			return false;
+		}
+	}
+#endif
 
 	// The buffer belongs to inflight_ from here until the pool hands `number` back. Nothing
 	// else may write it, and it must not be a member reused across frames.
@@ -149,24 +163,28 @@ bool Encoder::submit(const uint8_t *rgba, const OnSample &on_sample, std::string
 	return true;
 }
 
+bool Encoder::take(bool block, const OnSample &on_sample) {
+	uint32_t number = 0;
+	CFHD_SampleBufferRef buffer = nullptr;
+	const CFHD_Error err = block ? CFHD_WaitForSample(pool_, &number, &buffer)
+								 : CFHD_TestForSample(pool_, &number, &buffer);
+	if (err != CFHD_ERROR_OKAY || buffer == nullptr) {
+		// Non-blocking with nothing ready is the ordinary case, not a fault.
+		return false;
+	}
+	void *data = nullptr;
+	size_t len = 0;
+	if (CFHD_GetEncodedSample(buffer, &data, &len) == CFHD_ERROR_OKAY && data != nullptr) {
+		on_sample(data, len);
+	}
+	CFHD_ReleaseSampleBuffer(pool_, buffer);
+	// Only now is the input buffer for this frame no longer being read.
+	inflight_.erase(number);
+	return true;
+}
+
 void Encoder::drain(bool block, const OnSample &on_sample) {
-	while (!inflight_.empty()) {
-		uint32_t number = 0;
-		CFHD_SampleBufferRef buffer = nullptr;
-		const CFHD_Error err = block ? CFHD_WaitForSample(pool_, &number, &buffer)
-									 : CFHD_TestForSample(pool_, &number, &buffer);
-		if (err != CFHD_ERROR_OKAY || buffer == nullptr) {
-			// Non-blocking with nothing ready is the ordinary case, not a fault.
-			break;
-		}
-		void *data = nullptr;
-		size_t len = 0;
-		if (CFHD_GetEncodedSample(buffer, &data, &len) == CFHD_ERROR_OKAY && data != nullptr) {
-			on_sample(data, len);
-		}
-		CFHD_ReleaseSampleBuffer(pool_, buffer);
-		// Only now is the input buffer for this frame no longer being read.
-		inflight_.erase(number);
+	while (!inflight_.empty() && take(block, on_sample)) {
 	}
 }
 

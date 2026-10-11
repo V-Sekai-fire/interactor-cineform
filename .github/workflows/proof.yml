@@ -40,8 +40,9 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
       - name: Build
         run: cmake --build build --parallel
-      - name: Prove the wire agreement
-        run: ./build/cineform-proof-wire
+      - name: Prove the wire agreement and the full encoder queue
+        # ctest, not the one binary, so every proof runs, along with each planted control.
+        run: ctest --test-dir build --output-on-failure
 
   builds-arm64:
     # This job used to assert that the build REFUSES to start on Apple Silicon, because
@@ -77,5 +78,5 @@ jobs:
           # Deployment target, not the host SDK. Built on a macOS 26 runner without this
           # pinned, the binary would refuse to launch on 15 and below.
           otool -l build/interactor-cineform | grep -A3 LC_BUILD_VERSION | grep minos
-      - name: Prove the wire agreement
+      - name: Prove the wire agreement and the full encoder queue
         run: ctest --test-dir build --output-on-failure

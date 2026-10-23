@@ -33,7 +33,7 @@ jobs:
           git -C thirdparty/harness checkout b3acc3be2e00cc2fa25d9d325aa7935c187ea0a2
           git clone --depth 1 --branch v1.6.1 https://github.com/laurencelundblade/QCBOR thirdparty/harness/libs/qcbor
           git clone --filter=blob:none --no-checkout https://github.com/weftspun/cineform-sdk thirdparty/cineform-sdk
-          git -C thirdparty/cineform-sdk checkout 6869d78c350f78117dfd04e7a74348c440876cc7
+          git -C thirdparty/cineform-sdk checkout 014a0df4aad2141e30dec954f98bea1427ac0389
           git clone --filter=blob:none --no-checkout https://github.com/weftspun/libwebm thirdparty/libwebm
           git -C thirdparty/libwebm checkout 6184f4484a826724b5293837134ab9492261b941
       - name: Configure
@@ -63,7 +63,7 @@ jobs:
           git -C thirdparty/harness checkout b3acc3be2e00cc2fa25d9d325aa7935c187ea0a2
           git clone --depth 1 --branch v1.6.1 https://github.com/laurencelundblade/QCBOR thirdparty/harness/libs/qcbor
           git clone --filter=blob:none --no-checkout https://github.com/weftspun/cineform-sdk thirdparty/cineform-sdk
-          git -C thirdparty/cineform-sdk checkout 6869d78c350f78117dfd04e7a74348c440876cc7
+          git -C thirdparty/cineform-sdk checkout 014a0df4aad2141e30dec954f98bea1427ac0389
           git clone --filter=blob:none --no-checkout https://github.com/weftspun/libwebm thirdparty/libwebm
           git -C thirdparty/libwebm checkout 6184f4484a826724b5293837134ab9492261b941
       - name: Configure

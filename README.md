@@ -4,7 +4,7 @@ A headless wavelet video encoder that takes jobs over the shared-memory bus and 
 
 ## What it is for
 
-A job arrives as a command on the bus. The encoder opens the source the job names, encodes its frames and any interleaved audio, and answers with a progress sample per frame and one verdict at the end; pixels never cross the bus. It is the encoder in the pair RFD 1137 describes, with `transport-cineform-tui` sending jobs and `service-cineform` hosting both.
+A job arrives as a command on the bus. The encoder opens the source the job names, encodes its frames and any interleaved audio, and answers with a progress sample per frame and one verdict at the end; pixels never cross the bus. It is the encoder in the pair RFD66606-1137 describes, with `transport-cineform-tui` sending jobs and `service-cineform` hosting both.
 
 ## Build
 
